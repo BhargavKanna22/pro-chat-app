@@ -26,7 +26,7 @@ const Login = ({ setUser }) => {
     }
 
     try {
-      const res = await fetch(`http://${window.location.hostname}:3000/api/login`, {
+      const res = await fetch('https://pro-chat-app-k2jr.onrender.com/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, password, avatar })

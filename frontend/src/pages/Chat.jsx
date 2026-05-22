@@ -4,8 +4,10 @@ import Sidebar from '../components/Sidebar';
 import ChatWindow from '../components/ChatWindow';
 import './Chat.css';
 
-const BACKEND_URL = `http://${window.location.hostname}:3000`;
-const socket = io(BACKEND_URL);
+const BACKEND_URL = 'https://pro-chat-app-k2jr.onrender.com';
+const socket = io(BACKEND_URL, {
+  transports: ['websocket', 'polling']
+});
 
 const Chat = ({ user, setUser }) => {
   const [contacts, setContacts] = useState([]);
