@@ -1,0 +1,52 @@
+:root {
+  --bg-color: #d1d7db;
+  --panel-bg: #ffffff;
+  --text-main: #111b21;
+  --text-secondary: #667781;
+  --border-color: #d1d7db;
+  --primary-color: #0ea5e9;
+  --sent-bg: #e0f2fe;
+  --received-bg: #ffffff;
+  --chat-bg: #f0f9ff;
+  --hover-bg: #f5f6f6;
+  --danger: #ef4444;
+}
+
+[data-theme='dark'] {
+  --bg-color: #111b21;
+  --panel-bg: #202c33;
+  --text-main: #e9edef;
+  --text-secondary: #8696a0;
+  --border-color: #222d34;
+  --primary-color: #00a884;
+  --sent-bg: #005c4b;
+  --received-bg: #202c33;
+  --chat-bg: #0b141a;
+  --hover-bg: #2a3942;
+  --danger: #ef4444;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html, body, #root {
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+}
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
+    sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--bg-color);
+  color: var(--text-main);
+  overscroll-behavior-y: none;
+}
+
+
