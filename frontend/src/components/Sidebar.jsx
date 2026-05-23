@@ -3,7 +3,7 @@ import { LogOut, Settings, Mail } from 'lucide-react';
 import boyAvatar from '../assets/boy.png';
 import girlAvatar from '../assets/girl.png';
 
-const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, socket }) => {
+const Sidebar = ({ user, contacts, hiddenContacts = [], setHiddenContacts, activeContact, setActiveContact, setUser, socket }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [newName, setNewName] = useState(user.name);
   const [selectedToDelete, setSelectedToDelete] = useState([]);
@@ -75,7 +75,20 @@ const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, soc
     );
   };
 
+  const toggleHideContact = (contactId) => {
+    setHiddenContacts(prev => {
+      const newHidden = prev.includes(contactId) ? prev.filter(id => id !== contactId) : [...prev, contactId];
+      localStorage.setItem('hiddenContacts', JSON.stringify(newHidden));
+      return newHidden;
+    });
+    if (activeContact && activeContact.id === contactId && !hiddenContacts.includes(contactId)) {
+      setActiveContact(null);
+    }
+  };
+
   const getAvatar = (type) => type === 'girl' ? girlAvatar : boyAvatar;
+
+  const visibleContacts = contacts.filter(c => !hiddenContacts.includes(c.id));
 
   return (
     <div className="sidebar">
@@ -95,12 +108,12 @@ const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, soc
       </div>
       
       <div className="contacts-list">
-        {contacts.length === 0 ? (
+        {visibleContacts.length === 0 ? (
           <div style={{padding: '20px', textAlign: 'center', color: 'var(--text-secondary)'}}>
             Sorry u Have no Frnds 🥲
           </div>
         ) : (
-          contacts.map(contact => (
+          visibleContacts.map(contact => (
             <div 
               key={contact.id} 
               className={`contact-item ${activeContact?.id === contact.id ? 'active' : ''}`}
@@ -146,7 +159,31 @@ const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, soc
               </div>
             </div>
 
-            <div style={{borderTop: '1px solid var(--border-color)', paddingTop: '20px'}}>
+            <div style={{borderTop: '1px solid var(--border-color)', paddingTop: '20px', marginTop: '20px'}}>
+              <label style={{display: 'block', marginBottom: '12px', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Manage Visibility (Hide Contacts)</label>
+              
+              {contacts.length === 0 ? (
+                <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>No contacts available.</div>
+              ) : (
+                <div style={{maxHeight: '120px', overflowY: 'auto', marginBottom: '10px', background: 'var(--bg-color)', borderRadius: '6px', padding: '5px'}}>
+                  {contacts.map(contact => (
+                    <label key={contact.id} style={{display: 'flex', alignItems: 'center', padding: '8px', cursor: 'pointer', borderBottom: '1px solid var(--border-color)'}}>
+                      <input 
+                        type="checkbox" 
+                        checked={hiddenContacts.includes(contact.id)}
+                        onChange={() => toggleHideContact(contact.id)}
+                        style={{marginRight: '10px'}}
+                      />
+                      <img src={getAvatar(contact.avatar)} alt="avatar" style={{width: '24px', height: '24px', borderRadius: '50%', marginRight: '10px'}} />
+                      <span style={{fontSize: '0.9rem'}}>{contact.name}</span>
+                      <span style={{marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--text-secondary)'}}>{hiddenContacts.includes(contact.id) ? 'Hidden' : 'Visible'}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <div style={{borderTop: '1px solid var(--border-color)', paddingTop: '20px', marginTop: '20px'}}>
               <label style={{display: 'block', marginBottom: '12px', fontSize: '0.9rem', color: '#ff4444'}}>Danger Zone: Delete Chats</label>
               
               {contacts.length === 0 ? (

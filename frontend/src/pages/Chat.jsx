@@ -244,7 +244,9 @@ const Chat = ({ user, setUser }) => {
     <div className={`chat-layout ${activeContact ? 'has-active-contact' : ''}`}>
       <Sidebar 
         user={user} 
-        contacts={contacts.filter(c => !hiddenContacts.includes(c.id))} 
+        contacts={contacts} 
+        hiddenContacts={hiddenContacts}
+        setHiddenContacts={setHiddenContacts}
         activeContact={activeContact}
         setActiveContact={setActiveContact}
         setUser={setUser}
