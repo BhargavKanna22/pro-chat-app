@@ -18,38 +18,49 @@ const io = new Server(server, {
 });
 
 // API Routes
-app.post('/api/check-user', (req, res) => {
-  const { password, avatar } = req.body;
-  if (!password || !avatar) return res.status(400).json({ error: 'Password and avatar are required' });
+app.post('/api/check-email', (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ error: 'Email is required' });
   
-  db.get('SELECT id FROM users WHERE password = ? AND avatar = ?', [password, avatar], (err, row) => {
+  db.get('SELECT id FROM users WHERE email = ?', [email], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     res.json({ exists: !!row });
   });
 });
 
 app.post('/api/login', (req, res) => {
-  const { name, password, avatar, email } = req.body;
+  const { email, password, name, avatar } = req.body;
   
-  if (!name || !password || !avatar) {
-    return res.status(400).json({ error: 'Name, password, and avatar are required' });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email and password are required' });
   }
 
-  // Find user by password and avatar
-  db.get('SELECT * FROM users WHERE password = ? AND avatar = ?', [password, avatar], (err, row) => {
+  // Find user by email and password
+  db.get('SELECT * FROM users WHERE email = ? AND password = ?', [email, password], (err, row) => {
     if (err) return res.status(500).json({ error: err.message });
     
     if (row) {
-      // Update name and online status for this avatar in this password room
-      db.run('UPDATE users SET name = ?, isOnline = 1 WHERE id = ?', [name, row.id], function(updateErr) {
+      // Login returning user
+      db.run('UPDATE users SET isOnline = 1 WHERE id = ?', [row.id], function(updateErr) {
         if (updateErr) return res.status(500).json({ error: updateErr.message });
-        return res.json({ user: { id: row.id, name, avatar, password, email: row.email, isOnline: 1 } });
+        return res.json({ user: { id: row.id, name: row.name, avatar: row.avatar, password: row.password, email: row.email, isOnline: 1 } });
       });
     } else {
-      // Register new user for this avatar in this room
-      db.run('INSERT INTO users (name, password, avatar, email, isOnline) VALUES (?, ?, ?, ?, 1)', [name, password, avatar, email || null], function(err) {
-        if (err) return res.status(500).json({ error: err.message });
-        res.json({ user: { id: this.lastID, name, avatar, email: email || null, isOnline: 1 } });
+      // Check if email already exists with DIFFERENT password
+      db.get('SELECT id FROM users WHERE email = ?', [email], (err, existingEmail) => {
+        if (existingEmail) {
+          return res.status(401).json({ error: 'Incorrect password for this email.' });
+        }
+        
+        // Register new user
+        if (!name || !avatar) {
+           return res.status(400).json({ error: 'Name and avatar are required for new users' });
+        }
+
+        db.run('INSERT INTO users (name, password, avatar, email, isOnline) VALUES (?, ?, ?, ?, 1)', [name, password, avatar, email], function(err) {
+          if (err) return res.status(500).json({ error: err.message });
+          res.json({ user: { id: this.lastID, name, avatar, password, email, isOnline: 1 } });
+        });
       });
     }
   });
