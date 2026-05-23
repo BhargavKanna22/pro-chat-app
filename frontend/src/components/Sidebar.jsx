@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogOut, Settings, Mail, ChevronDown, ChevronRight, Key } from 'lucide-react';
+import { LogOut, Settings, Mail, ChevronDown, ChevronRight, Key, CheckCircle } from 'lucide-react';
 import boyAvatar from '../assets/boy.png';
 import girlAvatar from '../assets/girl.png';
 
@@ -14,6 +14,7 @@ const Sidebar = ({ user, contacts, hiddenContacts = [], setHiddenContacts, activ
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [isChangingPassword, setIsChangingPassword] = useState(false);
+  const [passwordChangeSuccess, setPasswordChangeSuccess] = useState(false);
 
   const handleLogout = () => {
     if (socket) socket.emit('logout');
@@ -111,10 +112,15 @@ const Sidebar = ({ user, contacts, hiddenContacts = [], setHiddenContacts, activ
           throw new Error("Backend not updated yet");
         }
         
-        // Log them out so they can log back in with the new password
-        if (socket) socket.emit('logout');
-        localStorage.removeItem('activePassword');
-        window.location.reload();
+        setPasswordChangeSuccess(true);
+        
+        // Wait 3 seconds to show the animation, then reload
+        setTimeout(() => {
+          if (socket) socket.emit('logout');
+          localStorage.removeItem('activePassword');
+          window.location.reload();
+        }, 3000);
+        
       } catch (err) {
         console.error(err);
         alert("Failed to change password! This means the Render backend hasn't finished deploying your new code yet. Please wait 2-3 minutes and try again.");
@@ -180,40 +186,51 @@ const Sidebar = ({ user, contacts, hiddenContacts = [], setHiddenContacts, activ
             
             {showPasswordPopup ? (
               <div style={{animation: 'fadeIn 0.2s ease-in-out'}}>
-                <h3 style={{marginTop: 0, marginBottom: '20px', textAlign: 'center'}}>Change Password</h3>
-                <div style={{marginBottom: '15px'}}>
-                  <label style={{display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>New Password</label>
-                  <input 
-                    type="password" 
-                    value={newPassword} 
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)'}}
-                  />
-                </div>
-                <div style={{marginBottom: '20px'}}>
-                  <label style={{display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Confirm New Password</label>
-                  <input 
-                    type="password" 
-                    value={confirmPassword} 
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)'}}
-                  />
-                </div>
-                <div style={{display: 'flex', gap: '10px', justifyContent: 'flex-end'}}>
-                  <button 
-                    onClick={() => setShowPasswordPopup(false)}
-                    style={{background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer'}}
-                  >
-                    Cancel
-                  </button>
-                  <button 
-                    onClick={handleChangePassword}
-                    disabled={isChangingPassword}
-                    style={{background: 'var(--primary-color)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: isChangingPassword ? 'not-allowed' : 'pointer'}}
-                  >
-                    {isChangingPassword ? 'Saving...' : 'Save Password'}
-                  </button>
-                </div>
+                {passwordChangeSuccess ? (
+                  <div style={{textAlign: 'center', padding: '30px 0', animation: 'scaleUp 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275)'}}>
+                    <CheckCircle size={64} color="#00C851" style={{marginBottom: '15px', animation: 'pulse 1.5s infinite'}} />
+                    <h2 style={{color: '#00C851', marginBottom: '10px'}}>Success!</h2>
+                    <p style={{color: 'var(--text-secondary)'}}>Your password was updated successfully.</p>
+                    <p style={{color: 'var(--text-secondary)', fontSize: '0.85rem'}}>Redirecting to login...</p>
+                  </div>
+                ) : (
+                  <>
+                    <h3 style={{marginTop: 0, marginBottom: '20px', textAlign: 'center'}}>Change Password</h3>
+                    <div style={{marginBottom: '15px'}}>
+                      <label style={{display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>New Password</label>
+                      <input 
+                        type="password" 
+                        value={newPassword} 
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)'}}
+                      />
+                    </div>
+                    <div style={{marginBottom: '20px'}}>
+                      <label style={{display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Confirm New Password</label>
+                      <input 
+                        type="password" 
+                        value={confirmPassword} 
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)'}}
+                      />
+                    </div>
+                    <div style={{display: 'flex', gap: '10px', justifyContent: 'flex-end'}}>
+                      <button 
+                        onClick={() => setShowPasswordPopup(false)}
+                        style={{background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer'}}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={handleChangePassword}
+                        disabled={isChangingPassword}
+                        style={{background: 'var(--primary-color)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: isChangingPassword ? 'not-allowed' : 'pointer'}}
+                      >
+                        {isChangingPassword ? 'Saving...' : 'Save Password'}
+                      </button>
+                    </div>
+                  </>
+                )}
               </div>
             ) : (
               <div style={{animation: 'fadeIn 0.2s ease-in-out'}}>
