@@ -6,6 +6,7 @@ import girlAvatar from '../assets/girl.png';
 const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, socket }) => {
   const [showSettings, setShowSettings] = useState(false);
   const [newName, setNewName] = useState(user.name);
+  const [selectedToDelete, setSelectedToDelete] = useState([]);
 
   const handleLogout = () => {
     if (socket) socket.emit('logout');
@@ -35,12 +36,24 @@ const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, soc
   };
 
   const handleDeleteChats = async () => {
-    if (window.confirm('Are you sure you want to permanently delete ALL your chat history? This cannot be undone.')) {
-      await fetch(`https://pro-chat-app-k2jr.onrender.com/api/users/${user.id}/chats`, {
-        method: 'DELETE'
-      });
+    if (selectedToDelete.length === 0) {
+      alert("Please select at least one chat to delete.");
+      return;
+    }
+    if (window.confirm(`Are you sure you want to permanently delete ${selectedToDelete.length} selected chat(s)? This cannot be undone.`)) {
+      for (const contactId of selectedToDelete) {
+        await fetch(`https://pro-chat-app-k2jr.onrender.com/api/messages/${user.id}/${contactId}`, {
+          method: 'DELETE'
+        });
+      }
       window.location.reload();
     }
+  };
+
+  const toggleSelectDelete = (contactId) => {
+    setSelectedToDelete(prev => 
+      prev.includes(contactId) ? prev.filter(id => id !== contactId) : [...prev, contactId]
+    );
   };
 
   const getAvatar = (type) => type === 'girl' ? girlAvatar : boyAvatar;
@@ -108,18 +121,40 @@ const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, soc
                 onClick={handleSaveName}
                 style={{marginTop: '10px', background: 'var(--accent-color)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer'}}
               >
-                Save Name
+                Save Changes
               </button>
             </div>
 
             <div style={{borderTop: '1px solid var(--border-color)', paddingTop: '20px'}}>
-              <label style={{display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: '#ff4444'}}>Danger Zone</label>
-              <button 
-                onClick={handleDeleteChats}
-                style={{width: '100%', background: 'transparent', color: '#ff4444', border: '1px solid #ff4444', padding: '10px', borderRadius: '6px', cursor: 'pointer'}}
-              >
-                Delete All Chats
-              </button>
+              <label style={{display: 'block', marginBottom: '12px', fontSize: '0.9rem', color: '#ff4444'}}>Danger Zone: Delete Chats</label>
+              
+              {contacts.length === 0 ? (
+                <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>No chats to delete.</div>
+              ) : (
+                <div style={{maxHeight: '120px', overflowY: 'auto', marginBottom: '10px', background: 'var(--bg-color)', borderRadius: '6px', padding: '5px'}}>
+                  {contacts.map(contact => (
+                    <label key={contact.id} style={{display: 'flex', alignItems: 'center', padding: '8px', cursor: 'pointer', borderBottom: '1px solid var(--border-color)'}}>
+                      <input 
+                        type="checkbox" 
+                        checked={selectedToDelete.includes(contact.id)}
+                        onChange={() => toggleSelectDelete(contact.id)}
+                        style={{marginRight: '10px'}}
+                      />
+                      <img src={getAvatar(contact.avatar)} alt="avatar" style={{width: '24px', height: '24px', borderRadius: '50%', marginRight: '10px'}} />
+                      <span style={{fontSize: '0.9rem'}}>{contact.name}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
+              
+              {contacts.length > 0 && (
+                <button 
+                  onClick={handleDeleteChats}
+                  style={{width: '100%', background: 'transparent', color: '#ff4444', border: '1px solid #ff4444', padding: '10px', borderRadius: '6px', cursor: 'pointer', opacity: selectedToDelete.length === 0 ? 0.5 : 1}}
+                >
+                  Delete Selected Chats
+                </button>
+              )}
             </div>
           </div>
         </div>
