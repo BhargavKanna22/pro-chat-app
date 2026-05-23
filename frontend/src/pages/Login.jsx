@@ -1,15 +1,30 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './Login.css';
 import boyAvatar from '../assets/boy.png';
 import girlAvatar from '../assets/girl.png';
 
 const Login = ({ setUser }) => {
-  const [step, setStep] = useState('email'); // 'email' | 'new_user' | 'returning_user'
+  const [step, setStep] = useState('email'); // 'email' | 'new_user' | 'returning_user' | 'saved_profile'
   const [email, setEmail] = useState('');
   const [avatar, setAvatar] = useState(null);
   const [name, setName] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
+
+  useEffect(() => {
+    const saved = localStorage.getItem('prochat_profile');
+    if (saved) {
+      try {
+        const profile = JSON.parse(saved);
+        setEmail(profile.email);
+        setName(profile.name);
+        setAvatar(profile.avatar);
+        setStep('saved_profile');
+      } catch (e) {
+        localStorage.removeItem('prochat_profile');
+      }
+    }
+  }, []);
 
   const handleAvatarSelect = (type) => {
     setAvatar(type);
@@ -49,7 +64,7 @@ const Login = ({ setUser }) => {
       setError('Please fill in all details.');
       return;
     }
-    if (step === 'returning_user' && !password) {
+    if ((step === 'returning_user' || step === 'saved_profile') && !password) {
       setError('Please enter your password.');
       return;
     }
@@ -63,6 +78,7 @@ const Login = ({ setUser }) => {
       const data = await res.json();
       
       if (res.ok) {
+        localStorage.setItem('prochat_profile', JSON.stringify({ email, name: data.user.name, avatar: data.user.avatar }));
         setUser(data.user);
       } else {
         setError(data.error);
@@ -145,6 +161,38 @@ const Login = ({ setUser }) => {
               {error && <div className="error-message">{error}</div>}
               <button type="submit">Log In</button>
               <button type="button" style={{marginTop: '10px', background: 'transparent', color: '#888', border: '1px solid #444', padding: '12px', borderRadius: '8px', cursor: 'pointer', width: '100%'}} onClick={() => setStep('email')}>Back</button>
+            </form>
+          </>
+        )}
+
+        {step === 'saved_profile' && (
+          <>
+            <div style={{display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: '20px'}}>
+              <img src={avatar === 'girl' ? girlAvatar : boyAvatar} alt="avatar" style={{width: '80px', height: '80px', borderRadius: '50%', backgroundColor: 'var(--message-received)', padding: '5px', marginBottom: '10px'}} />
+              <h2>Welcome Back, {name}!</h2>
+              <p className="subtitle" style={{marginBottom: 0}}>{email}</p>
+            </div>
+            <form onSubmit={handleLogin} className="login-form">
+              <input 
+                type="password" 
+                placeholder="Your Password" 
+                value={password} 
+                onChange={(e) => setPassword(e.target.value)}
+              />
+              {error && <div className="error-message">{error}</div>}
+              <button type="submit">Log In</button>
+              <button 
+                type="button" 
+                style={{marginTop: '10px', background: 'transparent', color: '#888', border: '1px solid #444', padding: '12px', borderRadius: '8px', cursor: 'pointer', width: '100%'}} 
+                onClick={() => {
+                  localStorage.removeItem('prochat_profile');
+                  setEmail('');
+                  setPassword('');
+                  setStep('email');
+                }}
+              >
+                Switch Account
+              </button>
             </form>
           </>
         )}

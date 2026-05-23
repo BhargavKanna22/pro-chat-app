@@ -112,6 +112,19 @@ function setupSocketHandlers(io, db) {
       });
     });
 
+    socket.on('logout', () => {
+      const userId = connectedUsers.get(socket.id);
+      const room = userRooms.get(socket.id);
+      if (userId) {
+        db.run("UPDATE users SET isOnline = 0, last_seen = datetime('now') WHERE id = ?", [userId]);
+        if (room) {
+           io.to(room).emit('user_status_change', { id: userId, isOnline: 0 });
+        }
+        connectedUsers.delete(socket.id);
+        userRooms.delete(socket.id);
+      }
+    });
+
     socket.on('disconnect', () => {
       const userId = connectedUsers.get(socket.id);
       const room = userRooms.get(socket.id);

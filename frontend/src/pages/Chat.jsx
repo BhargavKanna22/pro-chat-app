@@ -179,6 +179,7 @@ const Chat = ({ user, setUser }) => {
         activeContact={activeContact}
         setActiveContact={setActiveContact}
         setUser={setUser}
+        socket={socket}
       />
       <ChatWindow 
         activeContact={activeContact} 
