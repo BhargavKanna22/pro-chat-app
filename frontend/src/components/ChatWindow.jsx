@@ -289,22 +289,22 @@ const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, rea
               style={{width: '100%'}}
             />
           </form>
-          {(inputText.trim() || showEmoji) && (
-            <button 
-              className="icon-btn" 
-              style={{color: 'var(--primary-color)', padding: '10px'}} 
-              onMouseDown={(e) => {
-                e.preventDefault();
-                handleSend(e);
-              }}
-              onTouchStart={(e) => {
-                e.preventDefault(); // Prevents input blur on mobile
-                handleSend(e);
-              }}
-            >
-              <Send size={24} />
-            </button>
-          )}
+          <button 
+            className="icon-btn" 
+            style={{
+              color: 'var(--primary-color)', 
+              padding: '10px',
+              opacity: (inputText.trim() || showEmoji) ? 1 : 0.5,
+              pointerEvents: (inputText.trim() || showEmoji) ? 'auto' : 'none'
+            }} 
+            onPointerDown={(e) => {
+              e.preventDefault();
+              handleSend(e);
+              inputRef.current?.focus();
+            }}
+          >
+            <Send size={24} />
+          </button>
         </div>
       </div>
       {showEmoji && (
