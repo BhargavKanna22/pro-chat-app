@@ -12,9 +12,15 @@ const db = new sqlite3.Database(dbPath, (err) => {
       name TEXT,
       password TEXT,
       avatar TEXT,
+      email TEXT,
       isOnline INTEGER DEFAULT 0,
       last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
-    )`);
+    )`, () => {
+      // Safely attempt to add email column if it doesn't exist yet
+      db.run("ALTER TABLE users ADD COLUMN email TEXT", (err) => {
+        // Ignore error if column already exists
+      });
+    });
 
     db.run(`CREATE TABLE IF NOT EXISTS messages (
       id INTEGER PRIMARY KEY AUTOINCREMENT,

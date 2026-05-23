@@ -18,8 +18,18 @@ const io = new Server(server, {
 });
 
 // API Routes
+app.post('/api/check-user', (req, res) => {
+  const { password, avatar } = req.body;
+  if (!password || !avatar) return res.status(400).json({ error: 'Password and avatar are required' });
+  
+  db.get('SELECT id FROM users WHERE password = ? AND avatar = ?', [password, avatar], (err, row) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ exists: !!row });
+  });
+});
+
 app.post('/api/login', (req, res) => {
-  const { name, password, avatar } = req.body;
+  const { name, password, avatar, email } = req.body;
   
   if (!name || !password || !avatar) {
     return res.status(400).json({ error: 'Name, password, and avatar are required' });
@@ -33,13 +43,13 @@ app.post('/api/login', (req, res) => {
       // Update name and online status for this avatar in this password room
       db.run('UPDATE users SET name = ?, isOnline = 1 WHERE id = ?', [name, row.id], function(updateErr) {
         if (updateErr) return res.status(500).json({ error: updateErr.message });
-        return res.json({ user: { id: row.id, name, avatar, password, isOnline: 1 } });
+        return res.json({ user: { id: row.id, name, avatar, password, email: row.email, isOnline: 1 } });
       });
     } else {
       // Register new user for this avatar in this room
-      db.run('INSERT INTO users (name, password, avatar, isOnline) VALUES (?, ?, ?, 1)', [name, password, avatar], function(err) {
+      db.run('INSERT INTO users (name, password, avatar, email, isOnline) VALUES (?, ?, ?, ?, 1)', [name, password, avatar, email || null], function(err) {
         if (err) return res.status(500).json({ error: err.message });
-        res.json({ user: { id: this.lastID, name, avatar, isOnline: 1 } });
+        res.json({ user: { id: this.lastID, name, avatar, email: email || null, isOnline: 1 } });
       });
     }
   });

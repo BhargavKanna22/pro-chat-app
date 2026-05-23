@@ -1,3 +1,13 @@
+const nodemailer = require('nodemailer');
+
+const transporter = nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: 'gorlisatya714@gmail.com',
+    pass: 'notz htli mdbd yied'
+  }
+});
+
 const connectedUsers = new Map(); // socket.id -> userId
 const userRooms = new Map(); // socket.id -> password
 
@@ -41,13 +51,36 @@ function setupSocketHandlers(io, db) {
             timestamp: new Date().toISOString()
           };
           
-          if (room) {
-            io.to(room).emit('receive_message', message);
-          } else {
-            io.emit('receive_message', message);
+            if (room) {
+              io.to(room).emit('receive_message', message);
+            } else {
+              io.emit('receive_message', message);
+            }
+
+            // Check if receiver is offline and send email notification
+            db.get('SELECT email, isOnline, name FROM users WHERE id = ?', [receiver_id], (err, receiver) => {
+              if (receiver && receiver.isOnline === 0 && receiver.email) {
+                db.get('SELECT name FROM users WHERE id = ?', [sender_id], (err, sender) => {
+                  if (sender) {
+                    const mailOptions = {
+                      from: 'gorlisatya714@gmail.com',
+                      to: receiver.email,
+                      subject: `New message from ${sender.name} on Pro Chat App!`,
+                      text: `Hi ${receiver.name},\n\nYou have a new message from ${sender.name} on Pro Chat App.\n\nOpen the app to reply: https://pro-chat-app-indol.vercel.app\n\nThanks,\nPro Chat App Team`
+                    };
+                    transporter.sendMail(mailOptions, (error, info) => {
+                      if (error) {
+                        console.log('Error sending email:', error);
+                      } else {
+                        console.log('Offline email notification sent to:', receiver.email);
+                      }
+                    });
+                  }
+                });
+              }
+            });
           }
-        }
-      );
+        );
     });
 
     socket.on('clear_chat', ({ sender_id, receiver_id }) => {
