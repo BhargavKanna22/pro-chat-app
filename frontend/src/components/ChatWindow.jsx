@@ -15,7 +15,10 @@ const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, rea
   const quickReactions = ['👍', '❤️', '😂', '😮', '😢', '🙏'];
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+    if (messagesEndRef.current) {
+      const container = messagesEndRef.current.parentElement;
+      container.scrollTop = container.scrollHeight;
+    }
   };
 
   useEffect(() => {
