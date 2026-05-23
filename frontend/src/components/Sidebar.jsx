@@ -101,11 +101,15 @@ const Sidebar = ({ user, contacts, hiddenContacts = [], setHiddenContacts, activ
     if (window.confirm("WARNING: Your password is your Room Key! Changing it will move you to a new room and your current friends will disappear unless they also use your new password. Continue?")) {
       setIsChangingPassword(true);
       try {
-        await fetch(`https://pro-chat-app-k2jr.onrender.com/api/users/${user.id}/password`, {
+        const res = await fetch(`https://pro-chat-app-k2jr.onrender.com/api/users/${user.id}/password`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ password: newPassword })
         });
+        
+        if (!res.ok) {
+          throw new Error("Backend not updated yet");
+        }
         
         // Log them out so they can log back in with the new password
         if (socket) socket.emit('logout');
@@ -113,7 +117,7 @@ const Sidebar = ({ user, contacts, hiddenContacts = [], setHiddenContacts, activ
         window.location.reload();
       } catch (err) {
         console.error(err);
-        alert("Failed to change password. Please try again.");
+        alert("Failed to change password! This means the Render backend hasn't finished deploying your new code yet. Please wait 2-3 minutes and try again.");
         setIsChangingPassword(false);
       }
     }
