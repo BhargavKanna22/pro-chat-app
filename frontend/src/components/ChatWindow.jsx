@@ -264,10 +264,7 @@ const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, rea
           <button className="icon-btn" onClick={() => fileInputRef.current.click()}><Paperclip size={24} /></button>
           
           <form 
-            onSubmit={(e) => {
-              handleSend(e);
-              setTimeout(() => inputRef.current?.focus(), 10);
-            }} 
+            onSubmit={(e) => e.preventDefault()} 
             className="chat-input-form" 
             style={{flex: 1, display: 'flex'}}
           >
@@ -277,6 +274,12 @@ const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, rea
               placeholder="Type a message" 
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  handleSend(e);
+                }
+              }}
               onFocus={() => {
                 setTimeout(() => {
                   window.scrollTo(0, 0);
@@ -289,11 +292,14 @@ const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, rea
           {(inputText.trim() || showEmoji) && (
             <button 
               className="icon-btn" 
-              style={{color: 'var(--primary-color)'}} 
-              onMouseDown={(e) => e.preventDefault()}
-              onClick={(e) => {
+              style={{color: 'var(--primary-color)', padding: '10px'}} 
+              onMouseDown={(e) => {
+                e.preventDefault();
                 handleSend(e);
-                setTimeout(() => inputRef.current?.focus(), 10);
+              }}
+              onTouchStart={(e) => {
+                e.preventDefault(); // Prevents input blur on mobile
+                handleSend(e);
               }}
             >
               <Send size={24} />
