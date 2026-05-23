@@ -114,6 +114,17 @@ app.put('/api/users/:userId/name', (req, res) => {
   });
 });
 
+app.put('/api/users/:userId/password', (req, res) => {
+  const { userId } = req.params;
+  const { password } = req.body;
+  if (!password) return res.status(400).json({ error: 'Password is required' });
+
+  db.run('UPDATE users SET password = ? WHERE id = ?', [password, userId], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true });
+  });
+});
+
 app.delete('/api/users/:userId/chats', (req, res) => {
   const { userId } = req.params;
   db.run('DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?', [userId, userId], function(err) {

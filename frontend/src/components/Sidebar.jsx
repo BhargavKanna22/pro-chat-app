@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LogOut, Settings, Mail } from 'lucide-react';
+import { LogOut, Settings, Mail, ChevronDown, ChevronRight, Key } from 'lucide-react';
 import boyAvatar from '../assets/boy.png';
 import girlAvatar from '../assets/girl.png';
 
@@ -8,6 +8,12 @@ const Sidebar = ({ user, contacts, hiddenContacts = [], setHiddenContacts, activ
   const [newName, setNewName] = useState(user.name);
   const [selectedToDelete, setSelectedToDelete] = useState([]);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showHideDropdown, setShowHideDropdown] = useState(false);
+  const [showDeleteDropdown, setShowDeleteDropdown] = useState(false);
+  const [showPasswordPopup, setShowPasswordPopup] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
+  const [isChangingPassword, setIsChangingPassword] = useState(false);
 
   const handleLogout = () => {
     if (socket) socket.emit('logout');
@@ -86,6 +92,33 @@ const Sidebar = ({ user, contacts, hiddenContacts = [], setHiddenContacts, activ
     }
   };
 
+  const handleChangePassword = async () => {
+    if (!newPassword || newPassword !== confirmPassword) {
+      alert("Passwords do not match or are empty!");
+      return;
+    }
+    
+    if (window.confirm("WARNING: Your password is your Room Key! Changing it will move you to a new room and your current friends will disappear unless they also use your new password. Continue?")) {
+      setIsChangingPassword(true);
+      try {
+        await fetch(`https://pro-chat-app-k2jr.onrender.com/api/users/${user.id}/password`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password: newPassword })
+        });
+        
+        // Log them out so they can log back in with the new password
+        if (socket) socket.emit('logout');
+        localStorage.removeItem('activePassword');
+        window.location.reload();
+      } catch (err) {
+        console.error(err);
+        alert("Failed to change password. Please try again.");
+        setIsChangingPassword(false);
+      }
+    }
+  };
+
   const getAvatar = (type) => type === 'girl' ? girlAvatar : boyAvatar;
 
   const visibleContacts = contacts.filter(c => !hiddenContacts.includes(c.id));
@@ -141,80 +174,147 @@ const Sidebar = ({ user, contacts, hiddenContacts = [], setHiddenContacts, activ
               </div>
             </div>
             
-            <div style={{marginBottom: '20px'}}>
-              <label style={{display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Change Name</label>
-              <input 
-                type="text" 
-                value={newName} 
-                onChange={(e) => setNewName(e.target.value)}
-                style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)'}}
-              />
-              <div style={{textAlign: 'right'}}>
-                <button 
-                  onClick={handleSaveName}
-                  style={{marginTop: '10px', background: 'var(--primary-color)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer'}}
-                >
-                  Save Changes
-                </button>
+            {showPasswordPopup ? (
+              <div style={{animation: 'fadeIn 0.2s ease-in-out'}}>
+                <h3 style={{marginTop: 0, marginBottom: '20px', textAlign: 'center'}}>Change Password</h3>
+                <div style={{marginBottom: '15px'}}>
+                  <label style={{display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>New Password</label>
+                  <input 
+                    type="password" 
+                    value={newPassword} 
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)'}}
+                  />
+                </div>
+                <div style={{marginBottom: '20px'}}>
+                  <label style={{display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Confirm New Password</label>
+                  <input 
+                    type="password" 
+                    value={confirmPassword} 
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                    style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)'}}
+                  />
+                </div>
+                <div style={{display: 'flex', gap: '10px', justifyContent: 'flex-end'}}>
+                  <button 
+                    onClick={() => setShowPasswordPopup(false)}
+                    style={{background: 'transparent', color: 'var(--text-primary)', border: '1px solid var(--border-color)', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer'}}
+                  >
+                    Cancel
+                  </button>
+                  <button 
+                    onClick={handleChangePassword}
+                    disabled={isChangingPassword}
+                    style={{background: 'var(--primary-color)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: isChangingPassword ? 'not-allowed' : 'pointer'}}
+                  >
+                    {isChangingPassword ? 'Saving...' : 'Save Password'}
+                  </button>
+                </div>
               </div>
-            </div>
-
-            <div style={{borderTop: '1px solid var(--border-color)', paddingTop: '20px', marginTop: '20px'}}>
-              <label style={{display: 'block', marginBottom: '12px', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Manage Visibility (Hide Contacts)</label>
-              
-              {contacts.length === 0 ? (
-                <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>No contacts available.</div>
-              ) : (
-                <div style={{maxHeight: '120px', overflowY: 'auto', marginBottom: '10px', background: 'var(--bg-color)', borderRadius: '6px', padding: '5px'}}>
-                  {contacts.map(contact => (
-                    <label key={contact.id} style={{display: 'flex', alignItems: 'center', padding: '8px', cursor: 'pointer', borderBottom: '1px solid var(--border-color)'}}>
-                      <input 
-                        type="checkbox" 
-                        checked={hiddenContacts.includes(contact.id)}
-                        onChange={() => toggleHideContact(contact.id)}
-                        style={{marginRight: '10px'}}
-                      />
-                      <img src={getAvatar(contact.avatar)} alt="avatar" style={{width: '24px', height: '24px', borderRadius: '50%', marginRight: '10px'}} />
-                      <span style={{fontSize: '0.9rem'}}>{contact.name}</span>
-                      <span style={{marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--text-secondary)'}}>{hiddenContacts.includes(contact.id) ? 'Hidden' : 'Visible'}</span>
-                    </label>
-                  ))}
+            ) : (
+              <div style={{animation: 'fadeIn 0.2s ease-in-out'}}>
+                <div style={{marginBottom: '20px'}}>
+                  <label style={{display: 'block', marginBottom: '8px', fontSize: '0.9rem', color: 'var(--text-secondary)'}}>Change Name</label>
+                  <input 
+                    type="text" 
+                    value={newName} 
+                    onChange={(e) => setNewName(e.target.value)}
+                    style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)'}}
+                  />
+                  <div style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '10px'}}>
+                    <button 
+                      onClick={() => setShowPasswordPopup(true)}
+                      style={{display: 'flex', alignItems: 'center', gap: '5px', background: 'transparent', color: 'var(--primary-color)', border: 'none', cursor: 'pointer', fontSize: '0.9rem', padding: '5px 0'}}
+                    >
+                      <Key size={16} /> Change Password
+                    </button>
+                    <button 
+                      onClick={handleSaveName}
+                      style={{background: 'var(--primary-color)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer'}}
+                    >
+                      Save Changes
+                    </button>
+                  </div>
                 </div>
-              )}
-            </div>
 
-            <div style={{borderTop: '1px solid var(--border-color)', paddingTop: '20px', marginTop: '20px'}}>
-              <label style={{display: 'block', marginBottom: '12px', fontSize: '0.9rem', color: '#ff4444'}}>Danger Zone: Delete Chats</label>
-              
-              {contacts.length === 0 ? (
-                <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>No chats to delete.</div>
-              ) : (
-                <div style={{maxHeight: '120px', overflowY: 'auto', marginBottom: '10px', background: 'var(--bg-color)', borderRadius: '6px', padding: '5px'}}>
-                  {contacts.map(contact => (
-                    <label key={contact.id} style={{display: 'flex', alignItems: 'center', padding: '8px', cursor: 'pointer', borderBottom: '1px solid var(--border-color)'}}>
-                      <input 
-                        type="checkbox" 
-                        checked={selectedToDelete.includes(contact.id)}
-                        onChange={() => toggleSelectDelete(contact.id)}
-                        style={{marginRight: '10px'}}
-                      />
-                      <img src={getAvatar(contact.avatar)} alt="avatar" style={{width: '24px', height: '24px', borderRadius: '50%', marginRight: '10px'}} />
-                      <span style={{fontSize: '0.9rem'}}>{contact.name}</span>
-                    </label>
-                  ))}
+                <div style={{borderTop: '1px solid var(--border-color)'}}>
+                  <div 
+                    onClick={() => setShowHideDropdown(!showHideDropdown)}
+                    style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 0', cursor: 'pointer'}}
+                  >
+                    <label style={{margin: 0, fontSize: '0.9rem', color: 'var(--text-secondary)', cursor: 'pointer'}}>Manage Visibility (Hide Contacts)</label>
+                    {showHideDropdown ? <ChevronDown size={18} color="var(--text-secondary)"/> : <ChevronRight size={18} color="var(--text-secondary)"/>}
+                  </div>
+                  
+                  {showHideDropdown && (
+                    <div style={{marginBottom: '15px', animation: 'fadeIn 0.2s ease-in-out'}}>
+                      {contacts.length === 0 ? (
+                        <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>No contacts available.</div>
+                      ) : (
+                        <div style={{maxHeight: '120px', overflowY: 'auto', background: 'var(--bg-color)', borderRadius: '6px', padding: '5px'}}>
+                          {contacts.map(contact => (
+                            <label key={contact.id} style={{display: 'flex', alignItems: 'center', padding: '8px', cursor: 'pointer', borderBottom: '1px solid var(--border-color)'}}>
+                              <input 
+                                type="checkbox" 
+                                checked={hiddenContacts.includes(contact.id)}
+                                onChange={() => toggleHideContact(contact.id)}
+                                style={{marginRight: '10px'}}
+                              />
+                              <img src={getAvatar(contact.avatar)} alt="avatar" style={{width: '24px', height: '24px', borderRadius: '50%', marginRight: '10px'}} />
+                              <span style={{fontSize: '0.9rem'}}>{contact.name}</span>
+                              <span style={{marginLeft: 'auto', fontSize: '0.75rem', color: 'var(--text-secondary)'}}>{hiddenContacts.includes(contact.id) ? 'Hidden' : 'Visible'}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
                 </div>
-              )}
-              
-              {contacts.length > 0 && (
-                <button 
-                  onClick={handleDeleteChats}
-                  disabled={isDeleting || selectedToDelete.length === 0}
-                  style={{width: '100%', background: 'transparent', color: '#ff4444', border: '1px solid #ff4444', padding: '10px', borderRadius: '6px', cursor: (isDeleting || selectedToDelete.length === 0) ? 'not-allowed' : 'pointer', opacity: (isDeleting || selectedToDelete.length === 0) ? 0.5 : 1}}
-                >
-                  {isDeleting ? 'Deleting...' : 'Delete Selected Chats'}
-                </button>
-              )}
-            </div>
+
+                <div style={{borderTop: '1px solid var(--border-color)'}}>
+                  <div 
+                    onClick={() => setShowDeleteDropdown(!showDeleteDropdown)}
+                    style={{display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '15px 0', cursor: 'pointer'}}
+                  >
+                    <label style={{margin: 0, fontSize: '0.9rem', color: '#ff4444', cursor: 'pointer'}}>Danger Zone: Delete Chats</label>
+                    {showDeleteDropdown ? <ChevronDown size={18} color="#ff4444"/> : <ChevronRight size={18} color="#ff4444"/>}
+                  </div>
+                  
+                  {showDeleteDropdown && (
+                    <div style={{marginBottom: '15px', animation: 'fadeIn 0.2s ease-in-out'}}>
+                      {contacts.length === 0 ? (
+                        <div style={{fontSize: '0.85rem', color: 'var(--text-secondary)'}}>No chats to delete.</div>
+                      ) : (
+                        <div style={{maxHeight: '120px', overflowY: 'auto', marginBottom: '10px', background: 'var(--bg-color)', borderRadius: '6px', padding: '5px'}}>
+                          {contacts.map(contact => (
+                            <label key={contact.id} style={{display: 'flex', alignItems: 'center', padding: '8px', cursor: 'pointer', borderBottom: '1px solid var(--border-color)'}}>
+                              <input 
+                                type="checkbox" 
+                                checked={selectedToDelete.includes(contact.id)}
+                                onChange={() => toggleSelectDelete(contact.id)}
+                                style={{marginRight: '10px'}}
+                              />
+                              <img src={getAvatar(contact.avatar)} alt="avatar" style={{width: '24px', height: '24px', borderRadius: '50%', marginRight: '10px'}} />
+                              <span style={{fontSize: '0.9rem'}}>{contact.name}</span>
+                            </label>
+                          ))}
+                        </div>
+                      )}
+                      
+                      {contacts.length > 0 && (
+                        <button 
+                          onClick={handleDeleteChats}
+                          disabled={isDeleting || selectedToDelete.length === 0}
+                          style={{width: '100%', background: 'transparent', color: '#ff4444', border: '1px solid #ff4444', padding: '10px', borderRadius: '6px', cursor: (isDeleting || selectedToDelete.length === 0) ? 'not-allowed' : 'pointer', opacity: (isDeleting || selectedToDelete.length === 0) ? 0.5 : 1}}
+                        >
+                          {isDeleting ? 'Deleting...' : 'Delete Selected Chats'}
+                        </button>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
           </div>
         </div>
       )}
