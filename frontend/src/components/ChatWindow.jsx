@@ -109,8 +109,11 @@ const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, rea
       <div 
         className="messages-list" 
         style={{paddingBottom: '30px'}}
-        onTouchStart={() => inputRef.current?.blur()}
-        onScroll={() => inputRef.current?.blur()}
+        onTouchMove={() => {
+          if (document.activeElement === inputRef.current) {
+            inputRef.current?.blur();
+          }
+        }}
       >
         {messages.length === 0 ? (
            <div style={{
