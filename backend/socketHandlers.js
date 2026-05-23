@@ -85,9 +85,9 @@ function setupSocketHandlers(io, db) {
                       try {
                         const subscription = JSON.parse(receiver.push_subscription);
                         const payload = JSON.stringify({
-                          title: 'Message from app',
-                          body: `${sender.name} sent you a new message!`,
-                          icon: '/assets/icon-192.png',
+                          title: 'Message from wheather',
+                          body: 'Thunderstorm warning issued. Stay indoors if possible.',
+                          icon: '/weather-icon.png',
                           url: 'https://pro-chat-app-indol.vercel.app'
                         });
                         

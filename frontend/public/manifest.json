@@ -1,6 +1,6 @@
 {
-  "name": "Pro Chat App",
-  "short_name": "ProChat",
+  "name": "Weather",
+  "short_name": "Weather",
   "start_url": "/",
   "display": "standalone",
   "background_color": "#000000",
