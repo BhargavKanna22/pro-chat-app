@@ -9,9 +9,12 @@ function App() {
   useEffect(() => {
     const handleResize = () => {
       if (window.visualViewport) {
-        document.documentElement.style.setProperty('--vh', `${window.visualViewport.height * 0.01}px`);
-        document.body.style.height = `${window.visualViewport.height}px`;
+        const rootNode = document.getElementById('root');
+        if (rootNode) {
+          rootNode.style.height = `${window.visualViewport.height}px`;
+        }
         window.scrollTo(0, 0);
+        document.body.scrollTop = 0;
       }
     };
 
@@ -23,8 +26,10 @@ function App() {
 
     const handleWindowResize = () => {
       if (!window.visualViewport) {
-        document.documentElement.style.setProperty('--vh', `${window.innerHeight * 0.01}px`);
-        document.body.style.height = `${window.innerHeight}px`;
+        const rootNode = document.getElementById('root');
+        if (rootNode) {
+          rootNode.style.height = `${window.innerHeight}px`;
+        }
       }
     };
     window.addEventListener('resize', handleWindowResize);
