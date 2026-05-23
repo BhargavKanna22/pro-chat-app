@@ -14,6 +14,14 @@ const Chat = ({ user, setUser }) => {
   const [activeContact, setActiveContact] = useState(null);
   const [messages, setMessages] = useState([]);
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [hiddenContacts, setHiddenContacts] = useState(() => {
+    try {
+      const saved = localStorage.getItem('hiddenContacts');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
 
   useEffect(() => {
     const savedTheme = localStorage.getItem('chat-theme');
@@ -102,6 +110,18 @@ const Chat = ({ user, setUser }) => {
 
     // Listen for new messages
     socket.on('receive_message', (message) => {
+      // Unhide contact if they sent us a message
+      if (message.receiver_id === user.id) {
+        setHiddenContacts(prev => {
+          if (prev.includes(message.sender_id)) {
+            const newHidden = prev.filter(id => id !== message.sender_id);
+            localStorage.setItem('hiddenContacts', JSON.stringify(newHidden));
+            return newHidden;
+          }
+          return prev;
+        });
+      }
+
       // Add message to current view if it belongs to the active conversation
       if (
         (message.sender_id === user.id && message.receiver_id === activeContact?.id) ||
@@ -210,11 +230,21 @@ const Chat = ({ user, setUser }) => {
     socket.emit('react_message', { messageId, reaction });
   };
 
+  const hideContact = () => {
+    if (!activeContact) return;
+    setHiddenContacts(prev => {
+      const newHidden = [...prev, activeContact.id];
+      localStorage.setItem('hiddenContacts', JSON.stringify(newHidden));
+      return newHidden;
+    });
+    setActiveContact(null);
+  };
+
   return (
     <div className={`chat-layout ${activeContact ? 'has-active-contact' : ''}`}>
       <Sidebar 
         user={user} 
-        contacts={contacts} 
+        contacts={contacts.filter(c => !hiddenContacts.includes(c.id))} 
         activeContact={activeContact}
         setActiveContact={setActiveContact}
         setUser={setUser}
@@ -227,6 +257,7 @@ const Chat = ({ user, setUser }) => {
         sendMessage={sendMessage}
         clearChat={clearChat}
         reactToMessage={reactToMessage}
+        hideContact={hideContact}
         setActiveContact={setActiveContact}
         isDarkMode={isDarkMode}
         toggleTheme={toggleTheme}

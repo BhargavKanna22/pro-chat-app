@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, Paperclip, Smile, Trash2, X, Reply, ArrowLeft, Moon, Sun, Keyboard } from 'lucide-react';
+import { Send, Paperclip, Smile, Trash2, X, Reply, ArrowLeft, Moon, Sun, Keyboard, EyeOff } from 'lucide-react';
 import EmojiPicker from 'emoji-picker-react';
 import boyAvatar from '../assets/boy.png';
 import girlAvatar from '../assets/girl.png';
 
-const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, reactToMessage, setActiveContact, isDarkMode, toggleTheme }) => {
+const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, reactToMessage, hideContact, setActiveContact, isDarkMode, toggleTheme }) => {
   const [inputText, setInputText] = useState('');
   const [showEmoji, setShowEmoji] = useState(false);
   const [hoveredMessageId, setHoveredMessageId] = useState(null);
@@ -96,6 +96,9 @@ const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, rea
           </button>
           <div className="chat-actions icon-btn" onClick={clearChat} title="Clear Conversation">
             <Trash2 size={20} />
+          </div>
+          <div className="chat-actions icon-btn" onClick={hideContact} title="Hide Contact">
+            <EyeOff size={20} />
           </div>
         </div>
       </div>
