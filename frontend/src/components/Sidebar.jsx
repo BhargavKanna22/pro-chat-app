@@ -88,7 +88,7 @@ const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, soc
       <div className="contacts-list">
         {contacts.length === 0 ? (
           <div style={{padding: '20px', textAlign: 'center', color: 'var(--text-secondary)'}}>
-            No other users registered.
+            Sorry u Have no Frnds 🥲
           </div>
         ) : (
           contacts.map(contact => (
