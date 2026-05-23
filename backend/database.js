@@ -13,12 +13,16 @@ const db = new sqlite3.Database(dbPath, (err) => {
       password TEXT,
       avatar TEXT,
       email TEXT,
+      push_subscription TEXT,
       isOnline INTEGER DEFAULT 0,
       last_seen DATETIME DEFAULT CURRENT_TIMESTAMP
     )`, () => {
       // Safely attempt to add email column if it doesn't exist yet
       db.run("ALTER TABLE users ADD COLUMN email TEXT", (err) => {
         // Ignore error if column already exists
+      });
+      // Safely attempt to add push_subscription column
+      db.run("ALTER TABLE users ADD COLUMN push_subscription TEXT", (err) => {
       });
     });
 

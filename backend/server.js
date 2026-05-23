@@ -2,8 +2,14 @@ const express = require('express');
 const http = require('http');
 const { Server } = require('socket.io');
 const cors = require('cors');
+const webpush = require('web-push');
 const db = require('./database');
 const setupSocketHandlers = require('./socketHandlers');
+
+// Setup Web Push
+const VAPID_PUBLIC_KEY = 'BEANpOYTUDIqy-9RvnN8SOX1hehsrZB7e_KznUJry_bOoUr5wP_E9oOfcl-GbT8g1ih2bJD0IrGFXmspNTXQQdo';
+const VAPID_PRIVATE_KEY = 'tnW0cCx5JDPetCAbXbqSkMbpV2hDPVyFdLdcNMHIWeM';
+webpush.setVapidDetails('mailto:gorlisatya714@gmail.com', VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY);
 
 const app = express();
 app.use(cors());
@@ -18,6 +24,23 @@ const io = new Server(server, {
 });
 
 // API Routes
+app.get('/api/vapid-public-key', (req, res) => {
+  res.send(VAPID_PUBLIC_KEY);
+});
+
+app.post('/api/subscribe', (req, res) => {
+  const { subscription, userId } = req.body;
+  if (!subscription || !userId) {
+    return res.status(400).json({ error: 'Subscription and userId required' });
+  }
+
+  const subStr = JSON.stringify(subscription);
+  db.run('UPDATE users SET push_subscription = ? WHERE id = ?', [subStr, userId], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.status(201).json({});
+  });
+});
+
 app.post('/api/check-email', (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ error: 'Email is required' });

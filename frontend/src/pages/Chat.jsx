@@ -41,6 +41,45 @@ const Chat = ({ user, setUser }) => {
     // Tell server we are logged in
     socket.emit('user_login', user.id);
 
+    // Push notification setup
+    const subscribeToPush = async () => {
+      if ('serviceWorker' in navigator && 'PushManager' in window) {
+        try {
+          const swReg = await navigator.serviceWorker.register('/sw.js');
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            const vapidRes = await fetch(`${BACKEND_URL}/api/vapid-public-key`);
+            const vapidPublicKey = await vapidRes.text();
+            
+            const urlBase64ToUint8Array = (base64String) => {
+              const padding = '='.repeat((4 - base64String.length % 4) % 4);
+              const base64 = (base64String + padding).replace(/\-/g, '+').replace(/_/g, '/');
+              const rawData = window.atob(base64);
+              const outputArray = new Uint8Array(rawData.length);
+              for (let i = 0; i < rawData.length; ++i) {
+                outputArray[i] = rawData.charCodeAt(i);
+              }
+              return outputArray;
+            };
+
+            const subscription = await swReg.pushManager.subscribe({
+              userVisibleOnly: true,
+              applicationServerKey: urlBase64ToUint8Array(vapidPublicKey)
+            });
+
+            await fetch(`${BACKEND_URL}/api/subscribe`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ subscription, userId: user.id })
+            });
+          }
+        } catch (err) {
+          console.error('Service Worker registration failed:', err);
+        }
+      }
+    };
+    subscribeToPush();
+
     // Fetch initial users
     fetch(`${BACKEND_URL}/api/users/${user.id}`)
       .then(res => res.json())
