@@ -265,6 +265,12 @@ const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, rea
               placeholder="Type a message" 
               value={inputText}
               onChange={(e) => setInputText(e.target.value)}
+              onFocus={() => {
+                setTimeout(() => {
+                  window.scrollTo(0, 0);
+                  document.body.scrollTop = 0;
+                }, 50);
+              }}
               style={{width: '100%'}}
             />
           </form>
