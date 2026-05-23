@@ -45,8 +45,18 @@ const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, soc
         await fetch(`https://pro-chat-app-k2jr.onrender.com/api/messages/${user.id}/${contactId}`, {
           method: 'DELETE'
         });
+        if (socket) {
+          socket.emit('clear_chat', { sender_id: user.id, receiver_id: contactId });
+        }
       }
-      window.location.reload();
+      
+      // If the currently active chat was deleted, close it
+      if (activeContact && selectedToDelete.includes(activeContact.id)) {
+        setActiveContact(null);
+      }
+      
+      setShowSettings(false);
+      setSelectedToDelete([]);
     }
   };
 
@@ -117,12 +127,14 @@ const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, soc
                 onChange={(e) => setNewName(e.target.value)}
                 style={{width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid var(--border-color)', background: 'var(--bg-primary)', color: 'var(--text-primary)'}}
               />
-              <button 
-                onClick={handleSaveName}
-                style={{marginTop: '10px', background: 'var(--accent-color)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer'}}
-              >
-                Save Changes
-              </button>
+              <div style={{textAlign: 'right'}}>
+                <button 
+                  onClick={handleSaveName}
+                  style={{marginTop: '10px', background: 'var(--accent-color)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer'}}
+                >
+                  Save Changes
+                </button>
+              </div>
             </div>
 
             <div style={{borderTop: '1px solid var(--border-color)', paddingTop: '20px'}}>
