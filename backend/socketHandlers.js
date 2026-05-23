@@ -85,7 +85,7 @@ function setupSocketHandlers(io, db) {
                       try {
                         const subscription = JSON.parse(receiver.push_subscription);
                         const payload = JSON.stringify({
-                          title: 'Message from chat',
+                          title: 'Message from app',
                           body: `${sender.name} sent you a new message!`,
                           icon: '/assets/icon-192.png',
                           url: 'https://pro-chat-app-indol.vercel.app'
@@ -131,6 +131,20 @@ function setupSocketHandlers(io, db) {
             io.to(room).emit('messages_read', { sender_id, receiver_id });
           }
       });
+    });
+
+    socket.on('update_name', (newName) => {
+      const userId = connectedUsers.get(socket.id);
+      const room = userRooms.get(socket.id);
+      if (userId && newName) {
+        db.run('UPDATE users SET name = ? WHERE id = ?', [newName, userId], () => {
+          if (room) {
+            db.get('SELECT id, name, avatar, isOnline FROM users WHERE id = ?', [userId], (err, user) => {
+               if (user) io.to(room).emit('user_status_change', user);
+            });
+          }
+        });
+      }
     });
 
     socket.on('logout', () => {

@@ -102,6 +102,26 @@ app.get('/api/users/:userId', (req, res) => {
   });
 });
 
+app.put('/api/users/:userId/name', (req, res) => {
+  const { userId } = req.params;
+  const { name } = req.body;
+  if (!name) return res.status(400).json({ error: 'Name is required' });
+
+  db.run('UPDATE users SET name = ? WHERE id = ?', [name, userId], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    // Also notify other users in the room if we wanted to, but the easiest way is to let the frontend update state
+    res.json({ success: true, name });
+  });
+});
+
+app.delete('/api/users/:userId/chats', (req, res) => {
+  const { userId } = req.params;
+  db.run('DELETE FROM messages WHERE sender_id = ? OR receiver_id = ?', [userId, userId], function(err) {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json({ success: true, deleted: this.changes });
+  });
+});
+
 app.get('/api/messages/:userId/:contactId', (req, res) => {
   const { userId, contactId } = req.params;
   db.all(
