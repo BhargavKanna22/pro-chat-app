@@ -7,6 +7,7 @@ const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, soc
   const [showSettings, setShowSettings] = useState(false);
   const [newName, setNewName] = useState(user.name);
   const [selectedToDelete, setSelectedToDelete] = useState([]);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   const handleLogout = () => {
     if (socket) socket.emit('logout');
@@ -41,22 +42,30 @@ const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, soc
       return;
     }
     if (window.confirm(`Are you sure you want to permanently delete ${selectedToDelete.length} selected chat(s)? This cannot be undone.`)) {
-      for (const contactId of selectedToDelete) {
-        await fetch(`https://pro-chat-app-k2jr.onrender.com/api/messages/${user.id}/${contactId}`, {
-          method: 'DELETE'
-        });
-        if (socket) {
-          socket.emit('clear_chat', { sender_id: user.id, receiver_id: contactId });
+      setIsDeleting(true);
+      try {
+        for (const contactId of selectedToDelete) {
+          await fetch(`https://pro-chat-app-k2jr.onrender.com/api/messages/${user.id}/${contactId}`, {
+            method: 'DELETE'
+          });
+          if (socket) {
+            socket.emit('clear_chat', { sender_id: user.id, receiver_id: contactId });
+          }
         }
+        
+        // If the currently active chat was deleted, close it
+        if (activeContact && selectedToDelete.includes(activeContact.id)) {
+          setActiveContact(null);
+        }
+        
+        setShowSettings(false);
+        setSelectedToDelete([]);
+      } catch (err) {
+        console.error("Error deleting chats:", err);
+        alert("There was an error deleting the chats. Please try again.");
+      } finally {
+        setIsDeleting(false);
       }
-      
-      // If the currently active chat was deleted, close it
-      if (activeContact && selectedToDelete.includes(activeContact.id)) {
-        setActiveContact(null);
-      }
-      
-      setShowSettings(false);
-      setSelectedToDelete([]);
     }
   };
 
@@ -162,9 +171,10 @@ const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, soc
               {contacts.length > 0 && (
                 <button 
                   onClick={handleDeleteChats}
-                  style={{width: '100%', background: 'transparent', color: '#ff4444', border: '1px solid #ff4444', padding: '10px', borderRadius: '6px', cursor: 'pointer', opacity: selectedToDelete.length === 0 ? 0.5 : 1}}
+                  disabled={isDeleting || selectedToDelete.length === 0}
+                  style={{width: '100%', background: 'transparent', color: '#ff4444', border: '1px solid #ff4444', padding: '10px', borderRadius: '6px', cursor: (isDeleting || selectedToDelete.length === 0) ? 'not-allowed' : 'pointer', opacity: (isDeleting || selectedToDelete.length === 0) ? 0.5 : 1}}
                 >
-                  Delete Selected Chats
+                  {isDeleting ? 'Deleting...' : 'Delete Selected Chats'}
                 </button>
               )}
             </div>
