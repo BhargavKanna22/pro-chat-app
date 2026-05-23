@@ -103,7 +103,12 @@ const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, rea
         </div>
       </div>
 
-      <div className="messages-list" style={{paddingBottom: '30px'}}>
+      <div 
+        className="messages-list" 
+        style={{paddingBottom: '30px'}}
+        onTouchStart={() => inputRef.current?.blur()}
+        onScroll={() => inputRef.current?.blur()}
+      >
         {messages.length === 0 ? (
            <div style={{
              flex: 1, 
@@ -258,7 +263,14 @@ const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, rea
           <input type="file" ref={fileInputRef} style={{display: 'none'}} onChange={handleFileUpload} accept="image/*" />
           <button className="icon-btn" onClick={() => fileInputRef.current.click()}><Paperclip size={24} /></button>
           
-          <form onSubmit={handleSend} className="chat-input-form" style={{flex: 1, display: 'flex'}}>
+          <form 
+            onSubmit={(e) => {
+              handleSend(e);
+              setTimeout(() => inputRef.current?.focus(), 10);
+            }} 
+            className="chat-input-form" 
+            style={{flex: 1, display: 'flex'}}
+          >
             <input 
               type="text" 
               ref={inputRef}
@@ -275,7 +287,15 @@ const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, rea
             />
           </form>
           {(inputText.trim() || showEmoji) && (
-            <button className="icon-btn" style={{color: 'var(--primary-color)'}} onClick={handleSend}>
+            <button 
+              className="icon-btn" 
+              style={{color: 'var(--primary-color)'}} 
+              onMouseDown={(e) => e.preventDefault()}
+              onClick={(e) => {
+                handleSend(e);
+                setTimeout(() => inputRef.current?.focus(), 10);
+              }}
+            >
               <Send size={24} />
             </button>
           )}
