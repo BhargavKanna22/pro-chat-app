@@ -130,7 +130,7 @@ const Sidebar = ({ user, contacts, activeContact, setActiveContact, setUser, soc
               <div style={{textAlign: 'right'}}>
                 <button 
                   onClick={handleSaveName}
-                  style={{marginTop: '10px', background: 'var(--accent-color)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer'}}
+                  style={{marginTop: '10px', background: 'var(--primary-color)', color: 'white', border: 'none', padding: '8px 16px', borderRadius: '6px', cursor: 'pointer'}}
                 >
                   Save Changes
                 </button>
