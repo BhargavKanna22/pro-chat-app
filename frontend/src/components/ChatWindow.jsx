@@ -277,7 +277,14 @@ const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, rea
               onKeyDown={(e) => {
                 if (e.key === 'Enter') {
                   e.preventDefault();
+                  e.stopPropagation();
                   handleSend(e);
+                }
+              }}
+              onKeyUp={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  e.stopPropagation();
                 }
               }}
               onFocus={() => {
@@ -297,7 +304,18 @@ const ChatWindow = ({ activeContact, messages, user, sendMessage, clearChat, rea
               opacity: (inputText.trim() || showEmoji) ? 1 : 0.5,
               pointerEvents: (inputText.trim() || showEmoji) ? 'auto' : 'none'
             }} 
-            onPointerDown={(e) => {
+            onMouseDown={(e) => {
+              e.preventDefault();
+            }}
+            onTouchStart={(e) => {
+              e.preventDefault(); // This is the most critical for iOS
+            }}
+            onTouchEnd={(e) => {
+              e.preventDefault();
+              handleSend(e);
+              inputRef.current?.focus();
+            }}
+            onClick={(e) => {
               e.preventDefault();
               handleSend(e);
               inputRef.current?.focus();
